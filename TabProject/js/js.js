@@ -163,8 +163,56 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let obj = new Option(100,100,'red',32,'center');
-    obj.createDiv('main-block-descr');
+    // obj.createDiv('main-block-descr');
 
+    // server request
 
+    let message = {
+        loading: "loading",
+        success: "success",
+        failure: "failure"
+    };
+
+    let form = document.querySelectorAll('form'),        
+        input = document.getElementsByTagName('input'),
+        statusMessage = document.createElement('div');
+
+        statusMessage.classList.add('status');  
+
+    form.forEach((item) => {
+        item.addEventListener('submit', (event) => {      
+            event.preventDefault();        
+            item.appendChild(statusMessage);
+    
+            let request = new XMLHttpRequest();
+            request.open('POST', 'server.php');
+            request.setRequestHeader('Content-type', 'application/json; charset=utf-8');
+    
+            let formData = new FormData(item);
+    
+            let obj = {};
+            formData.forEach((item, key) => {
+                obj[key] = item;
+            });
+            let json = JSON.stringify(obj);
+            request.send(json);
+    
+            request.addEventListener('readystatechange', () => {
+                if(request.readyState < 4 ) {
+                    statusMessage.textContent = message.loading;
+                } else if(request.readyState === 4 ) {
+                    statusMessage.textContent = message.success;
+                } else {
+                    statusMessage.textContent = message.failure;
+                }
+            });
+    
+            for( let i = 0; i < input.length; i++) {
+                input[i].value = '';
+            }
+    
+        });
+    });
+    
     
  });

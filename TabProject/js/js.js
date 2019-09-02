@@ -179,40 +179,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
         statusMessage.classList.add('status');  
 
-    form.forEach((item) => {
-        item.addEventListener('submit', (event) => {      
-            event.preventDefault();        
-            item.appendChild(statusMessage);
-    
-            let request = new XMLHttpRequest();
-            request.open('POST', 'server.php');
-            request.setRequestHeader('Content-type', 'application/json; charset=utf-8');
-    
-            let formData = new FormData(item);
-    
-            let obj = {};
-            formData.forEach((item, key) => {
-                obj[key] = item;
-            });
-            let json = JSON.stringify(obj);
-            request.send(json);
-    
-            request.addEventListener('readystatechange', () => {
-                if(request.readyState < 4 ) {
-                    statusMessage.textContent = message.loading;
-                } else if(request.readyState === 4 ) {
-                    statusMessage.textContent = message.success;
-                } else {
-                    statusMessage.textContent = message.failure;
-                }
-            });
-    
-            for( let i = 0; i < input.length; i++) {
-                input[i].value = '';
+    function sendForm(elem) {        
+        elem.addEventListener('submit', (event) => {      
+                event.preventDefault();        
+                elem.appendChild(statusMessage);
+        
+                let formData = new FormData(elem);
+
+            function postData() {
+                return new Promise(function (resolve, reject) {
+                    let request = new XMLHttpRequest();
+                    request.open('POST', 'server.php');
+                    request.setRequestHeader('Content-type', 'application/json; charset=utf-8');
+
+                    let obj = {};
+                    formData.forEach((item, key) => {
+                        obj[key] = item;
+                    });
+                    let json = JSON.stringify(obj);                
+
+                    request.onreadystatechange = function () {
+                        if(request.readyState < 4 ) {
+                            resolve();
+                        } else if(request.readyState === 4 ) {
+                            if(request.status == 200 && request.status < 300) {
+                                resolve();
+                            } else {
+                                reject();
+                            }                            
+                        }
+                    };
+                    request.send(json);
+                });
             }
-    
+
+            function clearInput() {
+                for( let i = 0; i < input.length; i++) {
+                    input[i].value = '';
+                }
+            }
+
+            postData(formData)
+                .then(() => statusMessage.innerHTML = message.loading)
+                .then(() => statusMessage.innerHTML = message.success) 
+                .catch(() => statusMessage.innerHTML = message.failure)    
+                .then(clearInput);
         });
-    });
+
+    }
+
+     sendForm(form[0]);
+     sendForm(form[1]);
+
+
     
     
- });
+});
